@@ -1,0 +1,86 @@
+<title>Kervan Yolu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@500;700;800&family=Alegreya+Sans:wght@400;500;700;800&display=swap">
+<style>
+/*CSS*/
+</style>
+<div id="app">
+  <canvas id="gl" aria-label="Oyun dünyası"></canvas>
+  <div id="labels" class="layer"></div>
+  <div id="fx" class="layer"></div>
+
+  <div id="hud" hidden>
+    <div class="tl">
+      <div class="pframe box">
+        <div id="pLvl" class="lvl" title="Seviye">1</div>
+        <div class="pbars">
+          <div class="pname"><span>Gezgin</span><span class="gold">{{icon:coin}}<b id="pGold">0</b></span></div>
+          <div class="bar hp" title="Can"><i id="hpFill"></i><span id="hpTxt"></span></div>
+          <div class="bar mp" title="Ruh"><i id="mpFill"></i><span id="mpTxt"></span></div>
+          <div id="buffs" class="buffs"></div>
+        </div>
+      </div>
+      <div id="petbar" class="petbar" hidden></div>
+      <div id="tframe" class="tframe box" hidden>
+        <div id="tName" class="tname"></div>
+        <div class="bar tg"><i id="tFill"></i><span id="tTxt"></span></div>
+      </div>
+      <div id="quest" class="quest box" role="status"></div>
+    </div>
+    <div class="mapbox">
+      <canvas id="mini" aria-label="Mini harita. Büyütmek için dokun."></canvas>
+      <div id="areaName" class="area"></div>
+    </div>
+    <nav class="menu" aria-label="Menü">
+      <button data-open="inv" title="Çanta (B)" aria-label="Çanta">{{icon:bag}}<span>Çanta</span></button>
+      <button data-open="char" title="Karakter (C)" aria-label="Karakter">{{icon:person}}<span>Karakter</span></button>
+      <button data-open="skills" title="Yetenekler (K)" aria-label="Yetenekler">{{icon:star}}<span>Yetenek</span></button>
+      <button data-open="caravan" title="Kervan ve pazar (V)" aria-label="Kervan">{{icon:camel}}<span>Kervan</span></button>
+      <button data-open="pets" title="Hayvanlar (P)" aria-label="Hayvanlar">{{icon:paw}}<span>Hayvanlar</span></button>
+      <button data-open="map" title="Harita (M)" aria-label="Harita">{{icon:map}}<span>Harita</span></button>
+      <button data-open="settings" title="Ayarlar (O)" aria-label="Ayarlar">{{icon:gear}}<span>Ayarlar</span></button>
+      <button data-open="admin" id="adminBtn" class="admin" title="Yönetici paneli (Y)" aria-label="Yönetici paneli">{{icon:crown}}<span>Yönetici</span></button>
+    </nav>
+    <div id="log" class="log" aria-live="polite"></div>
+    <div class="bottom">
+      <div id="skillbar" class="skillbar"></div>
+      <div class="xp" title="Tecrübe"><i id="xpFill"></i><span id="xpTxt"></span></div>
+    </div>
+    <div id="banner" class="banner" aria-live="polite"></div>
+  </div>
+
+  <section id="panel" class="panel" hidden role="dialog" aria-labelledby="panelTitle">
+    <header><h2 id="panelTitle"></h2><button id="panelClose" class="x" aria-label="Kapat">{{icon:close}}</button></header>
+    <div id="panelBody" class="pbody"></div>
+  </section>
+
+  <div id="bigmap" class="bigmap" hidden><div class="bmwrap"><canvas></canvas><p>Kapatmak için dokun</p></div></div>
+
+  <div id="death" class="death" hidden>
+    <div class="card">
+      <h2>Yenildin</h2>
+      <p>Düşmek de yolun parçası. En yakın kasabada dirilirsin, biraz tecrübe kaybedersin.</p>
+      <button id="respawnBtn" class="btn primary wide">Kasabada diril</button>
+    </div>
+  </div>
+
+  <div id="intro" class="intro">
+    <div class="icard">
+      <p class="eyebrow">Tarayıcı prototipi · v0.1</p>
+      <h1>Kervan Yolu</h1>
+      <p class="tag">Sarıkum'dan Taşkale'ye uzanan yolda kılıcını biley, ateşini büyüt, kervanını sağ salim götür.</p>
+      <div id="introBody">
+        <div class="ibtns"><button id="startBtn" class="btn primary big">Yola çık</button><button id="newBtn" class="btn ghost" hidden>Yeni oyun</button></div>
+        <p id="saveInfo" class="saveinfo"></p>
+        <ul id="introHelp" class="ihelp"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
+<script>
+/*JS*/
+</script>

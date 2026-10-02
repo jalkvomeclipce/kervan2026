@@ -1,0 +1,18 @@
+const fs = require('fs'), vm = require('vm');
+const ctx = { console }; vm.createContext(ctx);
+vm.runInContext(['terrain', 'data', 'logic', 'pets'].map(f => fs.readFileSync(__dirname + '/../src/' + f + '.js', 'utf8')).join('\n') + '\nthis.KY = KY;', ctx);
+const W = new ctx.KY.World(null), p = W.player;
+const ok = (c, m) => { console.log((c ? 'OK  ' : 'FAIL') + ' ' + m); if (!c) process.exitCode = 1; };
+W.adminGold(1000000); ok(p.gold === 1000060, 'altın eklendi: ' + p.gold);
+W.adminLevel(20); ok(p.lv === 20 && p.points === 57 && p.str === 39 && p.hp === W.stats.maxHp, `seviye 20, puan ${p.points}, str ${p.str}, can dolu`);
+W.adminStats(); ok(p.points === 0 && p.str > 39, 'puanlar dağıtıldı');
+W.adminMastery(); ok(p.mastery.kilic === 20 && W.skillReady('demir') === 'ok', 'ustalıklar 20, Demir Beden açık');
+W.adminLevel(5); ok(p.lv === 5 && p.str === 24 && p.points === 12 && p.mastery.kilic === 5, 'seviye 5 geri, puanlar sıfırlandı');
+W.adminLevel(99); ok(p.lv === 30, 'üst sınır 30');
+W.adminAllSwords(); const sw = p.inv.filter(s => s && s.id[0] === 'w').length; ok(sw === 7, 'tüm kılıçlar: ' + sw + ' (+1 kuşanılı)');
+W.adminPlus('weapon', 9); ok(p.eq.weapon.plus === 9, '+9');
+p.god = true; const hp0 = p.hp; W.hitPlayer({ id: 'x' }, 5000, false); ok(p.hp === hp0 && !p.dead, 'ölümsüzlük');
+W.adminTeleport(-140, -74); ok(ctx.KY.Terrain.walkable(p.x, p.z) && Math.hypot(p.x + 140, p.z + 74) < 10, `ışınlandı ${p.x.toFixed(0)},${p.z.toFixed(0)}`);
+W.adminTrade(10); ok(p.trade.lv === 10 && W.capacity() === 44, 'tüccar 10, kapasite ' + W.capacity());
+const k = [...W.mobs.values()].find(m => m.type === 'kizilyele'); W.killMob(k); W.adminBosses(); W.update(0.05); ok(!k.dead, 'büyük canavar yeniden doğdu');
+const s = JSON.stringify(W.serialize()); const W2 = new ctx.KY.World(JSON.parse(s)); ok(W2.player.lv === 30 && W2.player.gold === p.gold && !W2.player.god, 'kayıt: seviye ve altın kalıcı, ölümsüzlük kaydedilmez');

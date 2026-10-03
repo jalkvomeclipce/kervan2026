@@ -56,10 +56,28 @@ KY.Icons = (function () {
       const url = KY.Swords && KY.Swords.iconURL(it.id);
       return url ? `<img src="${url}" alt="" draggable="false">` : `<span style="color:#e7c46a;display:block;width:100%;height:100%">${I.paw}</span>`;
     }
+    if (it.type !== 'weapon' && it.type !== 'pet' && KY.Avatar && KY.Avatar.iconURL) {
+      const url = KY.Avatar.iconURL(it.id);
+      if (url) return `<img src="${url}" alt="" draggable="false">`;
+    }
     if (it.type === 'armor') {
       const c = armorCol[it.tier] || armorCol[0];
       return S(`<path d="M11 5 L16 8 L21 5 L27 9 L25 15 L22 14 L22 27 H10 L10 14 L7 15 L5 9 Z" fill="${c}"/><path d="M16 8 V27 M10 18 H22" stroke="${it.tier >= 2 ? '#e0b44a' : 'rgba(0,0,0,.25)'}" stroke-width="1.6"/>`);
     }
+    // yedek SVG simgeler (3D simge çekilemezse)
+    const c = armorCol[it.tier] || armorCol[0];
+    const svg = {
+      head: `<path d="M6 20 C6 10 26 10 26 20 L24 22 H8 Z" fill="${c}"/><path d="M6 20 H26" stroke="#e0b44a" stroke-width="2"/>`,
+      shoulder: `<path d="M5 22 C5 12 13 8 18 8 C24 8 27 13 27 18 L22 16 L18 22 Z" fill="${c}"/>`,
+      hands: `<path d="M10 6 H20 L22 18 L24 22 L19 27 H12 L9 20 Z" fill="${c}"/><path d="M10 12 H21" stroke="#e0b44a" stroke-width="1.6"/>`,
+      legs: `<path d="M8 6 H24 L27 26 L18 24 L16 14 L14 24 L5 26 Z" fill="${c}"/>`,
+      feet: `<path d="M10 4 H18 V20 L27 22 V27 H9 Z" fill="${c}"/>`,
+      shield: `<circle cx="16" cy="16" r="11" fill="${c}" stroke="#e0b44a" stroke-width="1.6"/><circle cx="16" cy="16" r="3" fill="#e0b44a"/>`,
+      earring: `<circle cx="16" cy="8" r="3" fill="none" stroke="#e0b44a" stroke-width="2"/><path d="M16 12 L20 20 L16 27 L12 20 Z" fill="#2ec4b0"/>`,
+      necklace: `<path d="M7 6 C7 18 25 18 25 6" fill="none" stroke="#e0b44a" stroke-width="2"/><path d="M16 17 L20 22 L16 28 L12 22 Z" fill="#e39a2a"/>`,
+      ring: `<circle cx="16" cy="18" r="8" fill="none" stroke="#e0b44a" stroke-width="3"/><path d="M16 4 L20 9 L16 12 L12 9 Z" fill="#d8453a"/>`
+    }[it.type];
+    if (svg) return S(svg);
     return I[it.icon] || I.bag;
   }
   I.item = item;

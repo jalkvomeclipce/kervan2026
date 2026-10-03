@@ -14,13 +14,12 @@ KY.View = (function () {
   const angLerp = (a, b, t) => { let d = b - a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return a + d * t; };
   const V = new THREE.Vector3();
 
-  const ARMOR_LOOK = {
-    a1: { cloth: 0xb4a585, trim: 0x7a5a3a, hat: 'band' },
-    a2: { cloth: 0x7a5536, trim: 0x2e2019, hat: 'band' },
-    a3: { cloth: 0x6d7883, trim: 0xc8a45a, hat: 'helm' },
-    a4: { cloth: 0x46526a, trim: 0xd9b25c, hat: 'helm' },
-    a5: { cloth: 0x8e2f22, trim: 0xe7c08a, hat: 'wrap' }
+  // bölge atmosferi: bozkır (serin mavi pus) ↔ çöl (sıcak altın pus)
+  const ATM = {
+    steppe: { fog: 0xc7d8e4, horizon: 0xd2e1ec, top: 0x3b77c4, hemiSky: 0xd8e6ff, hemiGround: 0x7d7650, sun: 0xfff0d6, sunI: 1.12, hemiI: 0.64 },
+    desert: { fog: 0xe6d4b2, horizon: 0xefe0c0, top: 0x4b86c6, hemiSky: 0xfff0dc, hemiGround: 0x9a7b54, sun: 0xffe4bc, sunI: 1.08, hemiI: 0.6 }
   };
+  const _ca = new THREE.Color(), _cb = new THREE.Color();
   function plusGlow(plus) {
     if (plus >= 9) return 0xc26bff;
     if (plus >= 7) return 0xffc040;
@@ -86,20 +85,23 @@ KY.View = (function () {
       this.labelLayer = opts.labelLayer;
       this.time = 0;
       const R = this.renderer = new THREE.WebGLRenderer({ canvas, antialias: this.quality === 'high', powerPreference: 'high-performance' });
-      R.setClearColor(0xe2d4b4);
+      R.setClearColor(ATM.steppe.horizon);
+      KY.Gfx.setAniso(R);
+      this.post = null;
       this.applyQuality();
       const S = this.scene = new THREE.Scene();
-      S.fog = new THREE.Fog(0xe0d3b3, 70, 240);
-      this.camera = new THREE.PerspectiveCamera(48, 1, 0.5, 340);
-      this.hemi = new THREE.HemisphereLight(0xd6e4ff, 0x8a6a45, 0.66);
+      S.fog = new THREE.Fog(ATM.steppe.fog, 35, 290);
+      this.camera = new THREE.PerspectiveCamera(48, 1, 0.4, 1500);
+      this.hemi = new THREE.HemisphereLight(ATM.steppe.hemiSky, ATM.steppe.hemiGround, ATM.steppe.hemiI);
       S.add(this.hemi);
-      const sun = this.sun = new THREE.DirectionalLight(0xfff0d8, 0.92);
+      const sun = this.sun = new THREE.DirectionalLight(ATM.steppe.sun, ATM.steppe.sunI);
       sun.castShadow = true;
       sun.shadow.mapSize.set(this.quality === 'high' ? 2048 : 1024, this.quality === 'high' ? 2048 : 1024);
-      const sc = sun.shadow.camera; sc.left = -34; sc.right = 34; sc.top = 34; sc.bottom = -34; sc.near = 10; sc.far = 220;
-      sun.shadow.bias = -0.0008; sun.shadow.normalBias = 0.03;
+      const sc = sun.shadow.camera; sc.left = -44; sc.right = 44; sc.top = 44; sc.bottom = -44; sc.near = 10; sc.far = 280;
+      sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.04;
       S.add(sun); S.add(sun.target);
-      this.sunDir = new THREE.Vector3(-0.55, 0.78, 0.32).normalize();
+      this.sunDir = KY.Gfx.U.uSunDir.value;
+      this.desert = 0;
 
       try { S.environment = KY.Swords.envFor(R); } catch (e) { /* ortam haritası yoksa kılıçlar düz ışıkla çizilir */ }
       this.world_ = KY.Scenery.build(S, this.quality);
@@ -107,6 +109,7 @@ KY.View = (function () {
       this.dustTex = this.makeDustTex();
       this.pGlow = new Particles(S, this.glowTex, 260, true);
       this.pDust = new Particles(S, this.dustTex, 120, false);
+      this.initMotes();
       this.ents = new Map();
       this.proj = new Map();
       this.tfx = [];
@@ -127,10 +130,9 @@ KY.View = (function () {
       this.aura.visible = false; S.add(this.aura);
 
       // kamera durumu
-      this.cam = { yaw: -1.05, pitch: 0.95, dist: innerWidth < innerHeight ? 26 : 24, tx: world.player.x, ty: world.player.y, tz: world.player.z, orbit: false };
+      this.cam = { yaw: -1.05, pitch: innerWidth < innerHeight ? 0.48 : 0.4, dist: innerWidth < innerHeight ? 18 : 15, tx: world.player.x, ty: world.player.y, tz: world.player.z, orbit: false };
       this.raycaster = new THREE.Raycaster();
       this.initTrail();
-      this.loadGuard();
       this.buildStatics();
       this.bindInput();
       this.resize();
@@ -148,17 +150,55 @@ KY.View = (function () {
     applyQuality() {
       const R = this.renderer, coarse = matchMedia('(pointer: coarse)').matches;
       const dpr = window.devicePixelRatio || 1;
-      R.setPixelRatio(Math.min(dpr, this.quality === 'high' ? (coarse ? 1.6 : 2) : 1));
+      R.setPixelRatio(Math.min(dpr, this.quality === 'high' ? (coarse ? 1.5 : 1.75) : 1));
       R.shadowMap.enabled = this.quality !== 'low';
-      R.shadowMap.type = THREE.PCFShadowMap;
+      R.shadowMap.type = THREE.PCFSoftShadowMap;
       if (this.sun) { this.sun.castShadow = this.quality !== 'low'; }
-      if (this.world_) this.world_.static.children.forEach(m => m.castShadow = this.quality !== 'low');
+      if (this.world_) {
+        this.world_.static.children.forEach(m => m.castShadow = this.quality !== 'low');
+        this.world_.leaves.children.forEach(m => m.castShadow = this.quality !== 'low');
+      }
+      // ışıltı + renk düzenleme yalnızca yüksek kalitede
+      if (this.quality === 'high' && !this.post) { try { this.post = new KY.Gfx.Post(R); } catch (e) { console.warn('son işleme kapalı', e); this.post = null; } }
+      this.usePost = this.quality === 'high' && !!this.post;
       if (this.camera) this.resize();
     }
     setQuality(q) {
       this.quality = q;
       this.applyQuality();
       this.scene.traverse(o => { if (o.material) o.material.needsUpdate = true; });
+    }
+    // havada süzülen polen / toz zerreleri (kameranın çevresinde)
+    initMotes() {
+      const N = 140, pos = new Float32Array(N * 3);
+      this.motes = { N, vel: new Float32Array(N * 3), pos };
+      for (let k = 0; k < N; k++) { pos[k * 3] = (Math.random() - 0.5) * 50; pos[k * 3 + 1] = Math.random() * 9; pos[k * 3 + 2] = (Math.random() - 0.5) * 50; this.motes.vel[k * 3] = Math.random(); }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const m = new THREE.Points(geo, new THREE.PointsMaterial({ map: this.glowTex, size: 0.22, color: 0xfff4d0, transparent: true, opacity: 0.75, depthWrite: false, blending: THREE.AdditiveBlending }));
+      m.frustumCulled = false;
+      this.scene.add(m);
+      this.motes.mesh = m;
+    }
+    updateMotes(dt) {
+      const M = this.motes, P = M.pos, C = this.cam, t = this.time;
+      for (let k = 0; k < M.N; k++) {
+        const i = k * 3, ph = M.vel[i] * 6.283;
+        P[i] += (Math.sin(t * 0.4 + ph) * 0.35 + 0.25 + this.desert * 1.6) * dt;
+        P[i + 1] += Math.sin(t * 0.7 + ph * 2) * 0.12 * dt;
+        P[i + 2] += Math.cos(t * 0.33 + ph) * 0.35 * dt;
+        let dx = P[i] - C.tx, dz = P[i + 2] - C.tz;
+        if (dx > 25) P[i] -= 50; else if (dx < -25) P[i] += 50;
+        if (dz > 25) P[i + 2] -= 50; else if (dz < -25) P[i + 2] += 50;
+        const gy = T.height(P[i], P[i + 2]);
+        if (P[i + 1] < gy + 0.3 || P[i + 1] > gy + 9) P[i + 1] = gy + 0.5 + Math.random() * 6;
+        // kameraya çok yaklaşan zerre ekranda dev bir kare olur: uzağa taşı
+        const cp = this.camera.position;
+        if ((P[i] - cp.x) ** 2 + (P[i + 1] - cp.y) ** 2 + (P[i + 2] - cp.z) ** 2 < 36) { P[i] = C.tx + (Math.random() - 0.5) * 50; P[i + 2] = C.tz + (Math.random() - 0.5) * 50; }
+      }
+      M.mesh.geometry.attributes.position.needsUpdate = true;
+      M.mesh.material.color.setHex(this.desert > 0.5 ? 0xffe2b0 : 0xfff6d8);
+      M.mesh.material.size = this.desert > 0.5 ? 0.16 : 0.22;
     }
     makeDustTex() {
       const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -171,6 +211,7 @@ KY.View = (function () {
     resize() {
       const w = this.canvas.clientWidth || innerWidth, h = this.canvas.clientHeight || innerHeight;
       this.renderer.setSize(w, h, false);
+      if (this.post) this.post.setSize(w, h);
       this.camera.aspect = w / h;
       this.camera.fov = w < h ? 56 : 46;
       this.camera.updateProjectionMatrix();
@@ -184,8 +225,7 @@ KY.View = (function () {
         if (n.role === 'kapi') {
           this.ents.set(n.id, { id: n.id, kind: 'npc', model: null, h: 3.5 });
         } else {
-          const look = Object.assign({}, n.look);
-          const md = Mo.human(look, { scale: 1.02 });
+          const md = this.npcModel(n);
           md.obj.position.set(n.x, n.y, n.z);
           md.obj.rotation.y = n.rot;
           this.scene.add(md.obj);
@@ -235,107 +275,35 @@ KY.View = (function () {
     }
     newAnim() { return { phase: Math.random() * 6, blend: 0, swing: -1, cast: -1, die: -1, hit: -1, idle: Math.random() * 6 }; }
 
-    // gerçek 3D karakter modeli (GLB, iskeletli, animasyonlu)
-    loadGuard() {
-      const b64 = KY.ASSETS && KY.ASSETS.guard;
-      if (!b64 || !THREE.GLTFLoader) return;
-      try {
-        const bin = atob(b64), buf = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
-        new THREE.GLTFLoader().parse(buf.buffer, '', (gltf) => { this.guard = gltf; this.rebuildPlayer(); }, (err) => console.warn('karakter modeli açılamadı', err));
-      } catch (e) { console.warn('karakter modeli açılamadı', e); }
-    }
-    buildSkinned(src, swordId, plus) {
-      const scene = THREE.SkeletonUtils ? THREE.SkeletonUtils.clone(src.scene) : src.scene;
-      const obj = new THREE.Group(), root = new THREE.Group();
-      obj.add(root); root.add(scene);
-      scene.traverse(o => {
-        if (!o.isMesh) return;
-        const map = o.material.map;
-        if (map) map.encoding = THREE.LinearEncoding;
-        o.material = new THREE.MeshLambertMaterial({ map, skinning: !!o.isSkinnedMesh });
-        o.castShadow = true; o.frustumCulled = false;
-      });
-      const mixer = new THREE.AnimationMixer(scene), clips = {};
-      for (const c of src.animations) clips[c.name] = mixer.clipAction(c);
-      for (const n of ['Attack', 'Cast', 'Hit', 'Die']) if (clips[n]) { clips[n].setLoop(THREE.LoopOnce, 1); clips[n].clampWhenFinished = true; }
-      if (clips.Attack) clips.Attack.timeScale = 1.25;
-      // kılıç: sağ el kemiğine, bıçak öne ve hafif aşağı bakacak şekilde
-      const md = { obj, root, kind: 'skinned', mixer, clips, cur: null, height: 1.8 };
-      const hand = scene.getObjectByName('hand_R');
-      if (hand && swordId) {
-        // Tutuş yönü bekleme pozuna göre: kılıç öne ve hafif aşağı bakar
-        if (clips.Idle) { clips.Idle.play(); mixer.update(0); }
-        scene.updateMatrixWorld(true);
-        const qb = new THREE.Quaternion(); hand.getWorldQuaternion(qb);
-        const d = new THREE.Vector3(0.08, -0.5, 0.86).normalize(), z = new THREE.Vector3(1, 0, 0);
-        z.addScaledVector(d, -z.dot(d)).normalize();
-        const x = new THREE.Vector3().crossVectors(d, z);
-        const qd = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, d, z));
-        const ws = new THREE.Vector3(); hand.getWorldScale(ws);
-        const sw = KY.Swords.build(swordId, plus, { sprites: true });
-        const holder = new THREE.Group();
-        holder.quaternion.copy(qb.invert().multiply(qd));
-        holder.position.set(0, 0.075 / ws.y, 0);
-        holder.scale.setScalar(1.1 / ws.x);
-        holder.add(sw.group); hand.add(holder);
-        md.sword = sw;
-      }
-      clips.Idle && clips.Idle.play(); md.cur = 'Idle';
+    // ---------------- karakterler: modüler avatar ----------------
+    npcModel(n) {
+      const md = KY.Avatar.build({ g: n.g || 'm', look: { skin: n.g === 'f' ? 1 : 0, hair: n.g === 'f' ? 0 : 0, beard: n.look.beard }, npc: n.look, scale: 1.0 });
+      md.dress({}, { noShadow: false });
       return md;
     }
-    animateSkinned(rec, e, dt) {
-      const md = rec.model, a = rec.anim, C = md.clips;
-      if (a.die >= 0) a.die += dt;
-      let want = a.die >= 0 ? 'Die' : (a.swing >= 0 && a.swing < 0.55) ? 'Attack' : (a.cast >= 0 && a.cast < 0.6) ? 'Cast' : e.moving ? 'Run' : 'Idle';
-      if (!C[want]) want = 'Idle';
-      const trig = (want === 'Attack' && a.swing < (md.prevSwing == null ? 9 : md.prevSwing)) || (want === 'Cast' && a.cast < (md.prevCast == null ? 9 : md.prevCast));
-      md.prevSwing = a.swing >= 0 ? a.swing : 9; md.prevCast = a.cast >= 0 ? a.cast : 9;
-      if (C.Run && e.kind === 'player') C.Run.timeScale = Math.max(0.8, Math.min(1.7, this.world.playerSpeed() / 6.8));
-      if (want !== md.cur || trig) {
-        const next = C[want], prev = md.cur && C[md.cur];
-        next.reset(); next.setEffectiveTimeScale(next.timeScale || 1); next.setEffectiveWeight(1); next.play();
-        if (prev && prev !== next) prev.crossFadeTo(next, want === 'Die' ? 0.25 : want === 'Attack' ? 0.08 : 0.15, false);
-        md.cur = want;
-      }
-      // kasırga: kendi etrafında dönüş
-      if (a.spin != null && a.spin >= 0) {
-        a.spin += dt; md.root.rotation.y = Math.min(1, a.spin / 0.45) * Math.PI * 2;
-        if (a.spin > 0.45) { a.spin = -1; md.root.rotation.y = 0; }
-      }
-      md.mixer.update(dt);
+    mobHuman(m) {
+      const L = m.def.look;
+      const md = KY.Avatar.build({ g: 'm', look: { skin: 2, hair2: 0 }, npc: Object.assign({}, L, { weapon: null }), scale: m.def.size });
+      md.dress({ weapon: { id: m.type === 'yagmaci' ? 'w3' : 'w2', plus: 0 } }, { noSprites: true });
+      return md;
     }
     rebuildPlayer() {
       const p = this.world.player;
       const old = this.ents.get('player');
-      if (old && old.model) this.scene.remove(old.model.obj);
-      if (this.guard) {
-        const md = this.buildSkinned(this.guard, p.eq.weapon.id, p.eq.weapon.plus);
-        md.obj.position.set(p.x, p.y, p.z);
-        md.obj.rotation.y = old && old.model ? old.model.obj.rotation.y : p.rot;
-        this.scene.add(md.obj);
-        const rec = { id: 'player', kind: 'player', model: md, anim: old ? old.anim : this.newAnim(), h: 2.0 };
-        this.ents.set('player', rec);
-        if (p.dead) rec.anim.die = 5;
+      const lk = p.look || { g: 'f' };
+      const sig = (lk.g || 'f') + '|' + (lk.hair || 0) + '|' + (lk.skin || 0) + '|' + (lk.hair2 || 0);
+      // aynı gövde: sadece giysiyi değiştir (iskelet ve animasyon sürer)
+      if (old && old.model && old.model.kind === 'avatar' && old.sig === sig) {
+        old.model.dress(p.eq);
         return;
       }
-      const al = ARMOR_LOOK[p.eq.armor.id] || ARMOR_LOOK.a1;
-      const look = Object.assign({ skin: 0xd8a47e, pants: 0x3a2e2a, hair: 0x2a1d16, weapon: null }, al);
-      const md = Mo.human(look, {});
-      // kılıç: data.js tarifinden üretilen 3D model, sağ ele takılır
-      const holder = new THREE.Group();
-      holder.rotation.x = 0.5;
-      md.hand.add(holder);
-      const sw = KY.Swords.forHand(p.eq.weapon.id, p.eq.weapon.plus);
-      holder.add(sw.wrap);
-      md.sword = sw;
-      if (p.eq.armor.plus >= 5) {
-        const ag = plusGlow(p.eq.armor.plus);
-        for (const c of md.trimParts) c.material = new THREE.MeshLambertMaterial({ color: al.trim, emissive: ag, emissiveIntensity: 0.55 });
-      }
+      if (old && old.model) this.scene.remove(old.model.obj);
+      const md = KY.Avatar.build({ g: lk.g, look: lk });
+      md.dress(p.eq);
       md.obj.position.set(p.x, p.y, p.z);
+      md.obj.rotation.y = old && old.model ? old.model.obj.rotation.y : p.rot;
       this.scene.add(md.obj);
-      const rec = { id: 'player', kind: 'player', model: md, anim: old ? old.anim : this.newAnim(), h: 2.0 };
+      const rec = { id: 'player', kind: 'player', model: md, anim: old ? old.anim : this.newAnim(), h: 2.0, sig };
       this.ents.set('player', rec);
       if (p.dead) rec.anim.die = 5;
     }
@@ -402,7 +370,7 @@ KY.View = (function () {
     ensureMob(m) {
       let rec = this.ents.get(m.id);
       if (rec) return rec;
-      const md = Mo.build(m.def);
+      const md = m.def.model === 'human' ? this.mobHuman(m) : Mo.build(m.def);
       md.obj.position.set(m.x, m.y, m.z);
       md.obj.rotation.y = m.rot;
       this.scene.add(md.obj);
@@ -604,6 +572,7 @@ KY.View = (function () {
     resetPose(rec) {
       const m = rec.model;
       if (!m) return;
+      if (m.kind === 'avatar') { m.root.position.set(0, 0, 0); m.root.rotation.set(0, 0, 0); return; }
       m.root.rotation.set(0, 0, 0); m.root.position.set(0, 0, 0);
       const s = m.kind === 'golem' ? m.size * 0.75 : (m.size || (m.kind === 'human' ? m.root.scale.x : 1));
       m.root.scale.setScalar(s || 1);
@@ -735,7 +704,12 @@ KY.View = (function () {
       if (a.cast > 0.6) a.cast = -1;
       if (a.hit > 0.25) a.hit = -1;
       const s = Math.sin(a.phase), c = Math.cos(a.phase), b = a.blend;
-      if (md.kind === 'skinned') { this.animateSkinned(rec, e, dt); return; }
+      if (md.kind === 'avatar') {
+        if (a.die >= 0) a.die += dt;
+        KY.Avatar.animate(md, a, e, dt);
+        if (rec.kind === 'mob' && a.die > 2.4) { md.root.position.y -= Math.min(1.5, (a.die - 2.4) * 1.2); if (a.die > 3.6) md.obj.visible = false; }
+        return;
+      }
       if (a.die >= 0) { a.die += dt; this.animDeath(rec, e, a); return; }
       if (md.kind === 'human') {
         md.legL.rotation.x = s * 0.75 * b;
@@ -958,10 +932,32 @@ KY.View = (function () {
       for (const pm of this.world_.portals) pm.material.map.center.set(0.5, 0.5);
       this.pGlow.update(dt);
       this.pDust.update(dt);
+      KY.Gfx.U.uTime.value = this.time;
       this.updateCamera(dt);
+      this.updateAtmosphere();
+      this.updateMotes(dt);
       this.updateLabels();
       this.updateFloats(dt);
-      this.renderer.render(this.scene, this.camera);
+      if (this.usePost) this.post.render(this.scene, this.camera);
+      else this.renderer.render(this.scene, this.camera);
+    }
+    // bölgeye göre sis, gök ve ışık renkleri yumuşakça değişir
+    updateAtmosphere() {
+      const C = this.cam, e = T.smoothstep(-20, 40, C.tx - T.riverX(C.tz) * 0.5);
+      this.desert = e;
+      const A = ATM.steppe, B = ATM.desert, U = KY.Gfx.U;
+      const mixc = (target, a, b) => target.copy(_ca.setHex(a)).lerp(_cb.setHex(b), e);
+      mixc(this.scene.fog.color, A.fog, B.fog);
+      mixc(U.uHorizon.value, A.horizon, B.horizon);
+      mixc(U.uSkyTop.value, A.top, B.top);
+      mixc(this.hemi.color, A.hemiSky, B.hemiSky);
+      mixc(this.hemi.groundColor, A.hemiGround, B.hemiGround);
+      mixc(this.sun.color, A.sun, B.sun);
+      U.uSunCol.value.copy(this.sun.color);
+      this.sun.intensity = A.sunI + (B.sunI - A.sunI) * e;
+      this.hemi.intensity = A.hemiI + (B.hemiI - A.hemiI) * e;
+      this.renderer.setClearColor(U.uHorizon.value);
+      if (this.post) this.post.mComp.uniforms.uWarm.value = e;
     }
 
     updateCamera(dt) {
@@ -973,12 +969,12 @@ KY.View = (function () {
         fx = tw.x; fz = tw.z; fy = tw.h;
       }
       const k = 1 - Math.exp(-dt * (C.orbit ? 2 : 9));
-      C.tx = lerp(C.tx, fx, k); C.ty = lerp(C.ty, fy + 1.0, k); C.tz = lerp(C.tz, fz, k);
-      const dist = C.orbit ? 46 : C.dist, pitch = C.orbit ? 0.62 : C.pitch;
+      C.tx = lerp(C.tx, fx, k); C.ty = lerp(C.ty, fy + 1.35, k); C.tz = lerp(C.tz, fz, k);
+      const dist = C.orbit ? 44 : C.dist, pitch = C.orbit ? 0.4 : C.pitch;
       let cx = C.tx + Math.sin(C.yaw) * Math.cos(pitch) * dist;
       let cz = C.tz + Math.cos(C.yaw) * Math.cos(pitch) * dist;
       let cy = C.ty + Math.sin(pitch) * dist;
-      const gy = T.height(cx, cz) + 2.5;
+      const gy = Math.max(T.height(cx, cz), T.WATER) + 1.6;
       if (cy < gy) cy = gy;
       if (this.shake > 0) {
         this.shake = Math.max(0, this.shake - dt);
@@ -987,11 +983,16 @@ KY.View = (function () {
       }
       this.camera.position.set(cx, cy, cz);
       this.camera.lookAt(C.tx, C.ty, C.tz);
-      this.world_.sky.position.set(cx, 0, cz);
-      // güneş ve gölge kamerası oyuncuyu izler
-      const s = this.sun;
-      s.position.set(C.tx + this.sunDir.x * 90, C.ty + this.sunDir.y * 90, C.tz + this.sunDir.z * 90);
-      s.target.position.set(C.tx, C.ty, C.tz);
+      KY.Gfx.U.uFocus.value.set(p.x, p.y + 1.0, p.z);
+      this.world_.sky.position.set(cx, cy, cz);
+      this.world_.mountains.position.set(cx, cy - 4, cz);
+      // güneş ve gölge kamerası: bakılan yöne biraz ileride ortalanır, texel'e kenetlenir (titremesin)
+      const s = this.sun, fwx = -Math.sin(C.yaw), fwz = -Math.cos(C.yaw), ahead = 14 * Math.cos(pitch);
+      let ox = C.tx + fwx * ahead, oz = C.tz + fwz * ahead;
+      const texel = 88 / s.shadow.mapSize.x;
+      ox = Math.round(ox / texel) * texel; oz = Math.round(oz / texel) * texel;
+      s.position.set(ox + this.sunDir.x * 120, C.ty + this.sunDir.y * 120, oz + this.sunDir.z * 120);
+      s.target.position.set(ox, C.ty, oz);
       s.target.updateMatrixWorld();
     }
 
@@ -1017,13 +1018,13 @@ KY.View = (function () {
         if (mode === 'pinch' && ptrs.size === 2) {
           const [a, b] = [...ptrs.values()];
           const d = Math.hypot(a.x - b.x, a.y - b.y);
-          if (pinch0 > 0) this.cam.dist = clamp(dist0 * pinch0 / d, 9, 48);
+          if (pinch0 > 0) this.cam.dist = clamp(dist0 * pinch0 / d, 7, 44);
           return;
         }
         if (mode === 'pending' && Math.hypot(e.clientX - sx, e.clientY - sy) > 9) mode = 'rotate';
         if (mode === 'rotate') {
           this.cam.yaw -= (e.clientX - lx) * 0.0085;
-          this.cam.pitch = clamp(this.cam.pitch + (e.clientY - ly) * 0.005, 0.38, 1.38);
+          this.cam.pitch = clamp(this.cam.pitch + (e.clientY - ly) * 0.005, 0.22, 1.38);
           if (this.onCamera) this.onCamera();
         }
         lx = e.clientX; ly = e.clientY;
@@ -1040,7 +1041,7 @@ KY.View = (function () {
       };
       cv.addEventListener('pointerup', up);
       cv.addEventListener('pointercancel', e => { ptrs.delete(e.pointerId); if (!ptrs.size) mode = null; });
-      cv.addEventListener('wheel', e => { e.preventDefault(); this.cam.dist = clamp(this.cam.dist * (1 + e.deltaY * 0.0012), 9, 48); }, { passive: false });
+      cv.addEventListener('wheel', e => { e.preventDefault(); this.cam.dist = clamp(this.cam.dist * (1 + e.deltaY * 0.0012), 7, 44); }, { passive: false });
     }
     pick(clientX, clientY) {
       const rect = this.canvas.getBoundingClientRect();

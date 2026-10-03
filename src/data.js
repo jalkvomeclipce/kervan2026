@@ -20,49 +20,49 @@ KY.DATA = (function () {
       name: 'Yaban Domuzu', lv: 3, hp: 170, atk: 27, def: 7, speed: 4.4, aggro: 0, size: 1.15,
       atkRange: 1.8, atkInt: 1.6, gold: [5, 11], model: 'quad',
       look: { c1: 0x5b4636, c2: 0x3b2d23, len: 1.3, h: 0.7, w: 0.62, leg: 0.34, head: 0.5, ears: 'round', tail: 0.25, tusks: true, mane: 0x2a201a },
-      drops: [['hp1', 0.18], ['mp1', 0.1], ['toz', 0.05], ['w2', 0.015], ['a2', 0.015]]
+      drops: [['hp1', 0.18], ['mp1', 0.1], ['toz', 0.05], ['w2', 0.015], ['a2', 0.015], ['hd2', 0.012], ['gl2', 0.012], ['bt2', 0.012], ['kl1', 0.015], ['yz1', 0.01]]
     },
     kurt: {
       name: 'Boz Kurt', lv: 5, hp: 290, atk: 37, def: 11, speed: 5.8, aggro: 9, size: 1.15,
       atkRange: 1.8, atkInt: 1.5, gold: [8, 16], model: 'quad',
       look: { c1: 0x7d8087, c2: 0xc9c6bf, len: 1.35, h: 0.55, w: 0.46, leg: 0.52, head: 0.44, ears: 'pointy', tail: 0.8, tailBushy: true },
-      drops: [['hp1', 0.18], ['mp1', 0.12], ['toz', 0.07], ['w2', 0.02], ['a2', 0.02]]
+      drops: [['hp1', 0.18], ['mp1', 0.12], ['toz', 0.07], ['w2', 0.02], ['a2', 0.02], ['sd2', 0.014], ['lg2', 0.014], ['hd2', 0.012], ['kl2', 0.01], ['kp1', 0.01], ['ky1', 0.01]]
     },
     haydut: {
       name: 'Çalı Haydudu', lv: 7, hp: 380, atk: 46, def: 15, speed: 5.0, aggro: 10, size: 1.05,
       atkRange: 2.0, atkInt: 1.6, gold: [12, 24], model: 'human',
       look: { skin: 0xc28a62, cloth: 0x5e5a3a, trim: 0x8a3b2a, pants: 0x3b3526, hat: 'hood', weapon: 'blade' },
-      drops: [['hp1', 0.22], ['mp1', 0.14], ['toz', 0.09], ['w3', 0.012], ['a3', 0.012]]
+      drops: [['hp1', 0.22], ['mp1', 0.14], ['toz', 0.09], ['w3', 0.012], ['a3', 0.012], ['hd3', 0.01], ['sd3', 0.01], ['gl3', 0.01], ['yz2', 0.008], ['kp2', 0.006]]
     },
     kizilyele: {
       name: 'Kızıl Yele', lv: 10, hp: 3200, atk: 90, def: 30, speed: 6.2, aggro: 12, size: 1.9, unique: true, respawn: 180,
       atkRange: 3.0, atkInt: 1.8, gold: [300, 450], model: 'quad',
       look: { c1: 0x8e2f22, c2: 0xe0b48a, len: 1.4, h: 0.6, w: 0.5, leg: 0.55, head: 0.48, ears: 'pointy', tail: 0.9, tailBushy: true, mane: 0xd8471f, glowEyes: 0xffc24a },
-      drops: [['a5', 1], ['w6', 0.35], ['toz', 1, 4], ['hp2', 1, 3]]
+      drops: [['a5', 1], ['w6', 0.35], ['hd5', 0.4], ['sd5', 0.4], ['gl5', 0.4], ['lg5', 0.4], ['bt5', 0.4], ['toz', 1, 4], ['hp2', 1, 3]]
     },
     akrep: {
       name: 'Kum Akrebi', lv: 9, hp: 480, atk: 60, def: 20, speed: 4.8, aggro: 8, size: 1.25,
       atkRange: 2.0, atkInt: 1.5, gold: [16, 30], model: 'scorpion',
       look: { c1: 0xb07a3a, c2: 0x6e4420 },
-      drops: [['hp2', 0.08], ['hp1', 0.15], ['mp1', 0.16], ['toz', 0.11], ['w3', 0.015], ['a3', 0.015]]
+      drops: [['hp2', 0.08], ['hp1', 0.15], ['mp1', 0.16], ['toz', 0.11], ['w3', 0.015], ['a3', 0.015], ['lg3', 0.012], ['bt3', 0.012], ['kl3', 0.008], ['ky2', 0.006]]
     },
     kertenkele: {
       name: 'Taş Kertenkele', lv: 11, hp: 560, atk: 66, def: 24, speed: 5.2, aggro: 0, size: 1.3,
       atkRange: 2.0, atkInt: 1.6, gold: [20, 36], model: 'quad',
       look: { c1: 0x7f8a5a, c2: 0xc9b98a, len: 1.8, h: 0.4, w: 0.6, leg: 0.24, head: 0.42, ears: 'none', tail: 1.3, spikes: 0xa25b32 },
-      drops: [['hp2', 0.1], ['mp2', 0.07], ['toz', 0.11], ['w4', 0.01], ['a4', 0.01], ['w7', 0.005]]
+      drops: [['hp2', 0.1], ['mp2', 0.07], ['toz', 0.11], ['w4', 0.01], ['a4', 0.01], ['w7', 0.005], ['hd4', 0.008], ['gl4', 0.008], ['bt4', 0.008]]
     },
     yagmaci: {
       name: 'Kervan Yağmacısı', lv: 13, hp: 700, atk: 83, def: 29, speed: 5.4, aggro: 11, size: 1.08,
       atkRange: 2.1, atkInt: 1.5, gold: [26, 44], model: 'human',
       look: { skin: 0xa8734f, cloth: 0x2d2a33, trim: 0xb8862b, pants: 0x1f1d24, hat: 'wrap', weapon: 'blade' },
-      drops: [['hp2', 0.15], ['mp2', 0.09], ['toz', 0.13], ['w4', 0.012], ['a4', 0.012], ['w7', 0.007]]
+      drops: [['hp2', 0.15], ['mp2', 0.09], ['toz', 0.13], ['w4', 0.012], ['a4', 0.012], ['w7', 0.007], ['sd4', 0.008], ['lg4', 0.008], ['kl4', 0.006], ['yz3', 0.004], ['kp3', 0.004], ['ky3', 0.004]]
     },
     tasdev: {
       name: 'Taş Dev', lv: 16, hp: 9000, atk: 160, def: 60, speed: 4.0, aggro: 12, size: 2.4, unique: true, respawn: 240,
       atkRange: 3.6, atkInt: 2.2, gold: [1200, 1600], model: 'golem',
       look: { c1: 0x8b7a66, c2: 0x5e5246, glow: 0xff8a2a },
-      drops: [['w5', 1], ['w8', 0.35], ['toz', 1, 8], ['hp2', 1, 5]]
+      drops: [['w5', 1], ['w8', 0.35], ['kl4', 0.5], ['yz3', 0.3], ['ky3', 0.3], ['toz', 1, 8], ['hp2', 1, 5]]
     }
   };
   for (const k in monsters) {
@@ -106,6 +106,51 @@ KY.DATA = (function () {
     a4: { name: 'Lamel Zırh', type: 'armor', def: 40, lv: 12, price: 2200, icon: 'armor', tier: 3, desc: 'Deri şeritlerle bağlanmış çelik levhalar.' },
     a5: { name: 'Kızıl Yele Postu', type: 'armor', def: 34, hpBonus: 150, lv: 10, price: 0, sell: 1200, icon: 'armor', tier: 4, desc: 'Kızıl Yele\'nin postu. +150 can.' }
   };
+  // ---- Ekipman: Silkroad tarzı yuvalar, zırh takımları, kalkan ve takılar ----
+  // Her zırh parçası karakterin üstünde ayrı bir 3D parça olarak görünür (avatar.js).
+  const eqSlots = ['weapon', 'shield', 'head', 'shoulder', 'armor', 'hands', 'legs', 'feet', 'earring', 'necklace', 'ring1', 'ring2'];
+  const slotName = { weapon: 'Silah', shield: 'Kalkan', head: 'Başlık', shoulder: 'Omuzluk', armor: 'Göğüslük', hands: 'Kolluk', legs: 'Etek', feet: 'Çizme', earring: 'Küpe', necklace: 'Kolye', ring1: 'Yüzük', ring2: 'Yüzük' };
+  const equipTypes = { weapon: 1, shield: 1, head: 1, shoulder: 1, armor: 1, hands: 1, legs: 1, feet: 1, earring: 1, necklace: 1, ring: 1 };
+  const armorParts = ['head', 'shoulder', 'armor', 'hands', 'legs', 'feet'];
+  const SETS = [
+    { key: 'keten', lv: 1, def: 6, price: 20, names: { head: 'Keten Alınlık', shoulder: 'Keten Omuz Sargısı', hands: 'Keten Kolluk', legs: 'Keten Etek', feet: 'Hasır Sandalet' },
+      desc: 'Hafif keten. Yolcunun ilk takımı.' },
+    { key: 'deri', lv: 4, def: 14, price: 240, names: { head: 'Deri Başlık', shoulder: 'Deri Omuzluk', hands: 'Deri Kolluk', legs: 'Deri Etek', feet: 'Deri Çizme' },
+      desc: 'Yağda sertleştirilmiş deri, perçinli.' },
+    { key: 'pullu', lv: 8, def: 26, price: 850, names: { head: 'Pullu Miğfer', shoulder: 'Pullu Omuzluk', hands: 'Pullu Kolluk', legs: 'Pullu Etek', feet: 'Pullu Çizme' },
+      desc: 'Üst üste binen demir pullar, tunç kenarlıklar.' },
+    { key: 'lamel', lv: 12, def: 40, price: 2200, names: { head: 'Lamel Miğfer', shoulder: 'Lamel Omuzluk', hands: 'Lamel Kolluk', legs: 'Lamel Etek', feet: 'Lamel Çizme' },
+      desc: 'İpek kordonla bağlanmış laklı çelik levhalar, altın işleme.' },
+    { key: 'kizil', lv: 10, def: 34, price: 0, unique: true, names: { head: 'Kızıl Yele Başlığı', shoulder: 'Kızıl Yele Omuzluğu', hands: 'Kızıl Yele Pençeleri', legs: 'Kızıl Yele Eteği', feet: 'Kızıl Yele Çizmesi' },
+      desc: 'Kızıl Yele\'nin postundan. Her parça +30 can verir.' }
+  ];
+  const PART = { head: [0.45, 0.5, 'hd'], shoulder: [0.35, 0.45, 'sd'], hands: [0.25, 0.35, 'gl'], legs: [0.5, 0.6, 'lg'], feet: [0.3, 0.4, 'bt'] };
+  SETS.forEach((S, t) => {
+    items['a' + (t + 1)].set = S.key;
+    for (const part in PART) {
+      const [dm, pm, pre] = PART[part], id = pre + (t + 1);
+      items[id] = { name: S.names[part], type: part, def: Math.max(1, Math.round(S.def * dm)), lv: S.lv, tier: t, set: S.key, icon: part,
+        price: S.unique ? 0 : Math.round(S.price * pm / 5) * 5, desc: S.desc };
+      if (S.unique) { items[id].hpBonus = 30; items[id].sell = 300; }
+    }
+  });
+  Object.assign(items, {
+    kl1: { name: 'Söğüt Kalkan', type: 'shield', def: 4, lv: 2, price: 60, tier: 0, icon: 'shield', desc: 'Örme söğüt dalları, deri kenarlık.' },
+    kl2: { name: 'Demir Çemberli Kalkan', type: 'shield', def: 10, lv: 5, price: 320, tier: 1, icon: 'shield', desc: 'Meşe gövde, demir çember ve göbek.' },
+    kl3: { name: 'Pullu Kalkan', type: 'shield', def: 18, lv: 9, price: 950, tier: 2, icon: 'shield', desc: 'Tunç pullarla kaplı yuvarlak kalkan.' },
+    kl4: { name: 'Hilal Kalkan', type: 'shield', def: 28, lv: 12, price: 2300, tier: 3, icon: 'shield', desc: 'Taşkale işi, altın hilal kakmalı lake kalkan.' },
+    kp1: { name: 'Bakır Küpe', type: 'earring', magBonus: 3, lv: 2, price: 80, tier: 0, icon: 'earring', desc: 'Büyü saldırısı +3.' },
+    kp2: { name: 'Gümüş Küpe', type: 'earring', magBonus: 8, lv: 7, price: 600, tier: 1, icon: 'earring', desc: 'Büyü saldırısı +8.' },
+    kp3: { name: 'Firuze Küpe', type: 'earring', magBonus: 16, critBonus: 0.02, lv: 12, price: 2000, tier: 3, icon: 'earring', desc: 'Büyü saldırısı +16, kritik +%2.' },
+    ky1: { name: 'Kemik Kolye', type: 'necklace', hpBonus: 40, lv: 2, price: 90, tier: 0, icon: 'necklace', desc: '+40 can.' },
+    ky2: { name: 'Gümüş Kolye', type: 'necklace', hpBonus: 120, lv: 7, price: 650, tier: 1, icon: 'necklace', desc: '+120 can.' },
+    ky3: { name: 'Kehribar Kolye', type: 'necklace', hpBonus: 260, lv: 12, price: 2100, tier: 3, icon: 'necklace', desc: '+260 can.' },
+    yz1: { name: 'Bakır Yüzük', type: 'ring', atkBonus: 3, lv: 2, price: 70, tier: 0, icon: 'ring', desc: 'Fiziksel saldırı +3.' },
+    yz2: { name: 'Gümüş Yüzük', type: 'ring', atkBonus: 8, lv: 7, price: 600, tier: 1, icon: 'ring', desc: 'Fiziksel saldırı +8.' },
+    yz3: { name: 'Yakut Yüzük', type: 'ring', atkBonus: 15, critBonus: 0.02, lv: 12, price: 2000, tier: 3, icon: 'ring', desc: 'Fiziksel saldırı +15, kritik +%2.' }
+  });
+  items.a1.name = 'Keten Gömlek'; items.a1.desc = 'Hafif keten. Yolcunun ilk takımı.';
+
   // Kılıç görünüşleri: swords.js bu tariflerden 3D model üretir.
   // prof: [bıçak boyu oranı, yarım genişlik], curve: eğrilik, teeth: [baş, son, adet, derinlik],
   // split: çatallı bıçak, slant: eğik uç, inlay: bıçak ortasındaki işleme (runes/gold/crystal/fuller)
@@ -252,7 +297,7 @@ KY.DATA = (function () {
 
   // Kasaba NPC'leri (kasaba merkezine göre konum)
   const npcRoles = {
-    tuccar: { title: 'Tüccar', shop: ['hp1', 'mp1', 'hp2', 'mp2'] },
+    tuccar: { title: 'Tüccar', shop: ['hp1', 'mp1', 'hp2', 'mp2', 'kp1', 'ky1', 'yz1', 'kp2', 'ky2', 'yz2', 'kp3', 'ky3', 'yz3'] },
     demirci: { title: 'Demirci' },
     kervan: { title: 'Kervan Ustası' },
     kapi: { title: 'Yol Kapısı' },
@@ -262,8 +307,8 @@ KY.DATA = (function () {
     sarikum: {
       style: 'steppe',
       npcs: [
-        { role: 'tuccar', name: 'Ayşe Hatun', dx: -5.5, dz: -6.5, look: { skin: 0xd9a47c, cloth: 0x2f6f73, trim: 0xe0b44a, pants: 0x274b4e, hat: 'cone' } },
-        { role: 'demirci', name: 'Usta Demir', dx: 6.5, dz: -6.5, look: { skin: 0xb9805a, cloth: 0x4a3a2c, trim: 0x8c5a2b, pants: 0x2d2620, hat: 'band', weapon: 'hammer' }, shop: ['w2', 'w3', 'a2', 'a3', 'toz'] },
+        { role: 'tuccar', name: 'Ayşe Hatun', g: 'f', dx: -5.5, dz: -6.5, look: { skin: 0xd9a47c, cloth: 0x2f6f73, trim: 0xe0b44a, pants: 0x274b4e, hat: 'cone' } },
+        { role: 'demirci', name: 'Usta Demir', dx: 6.5, dz: -6.5, look: { skin: 0xb9805a, cloth: 0x4a3a2c, trim: 0x8c5a2b, pants: 0x2d2620, hat: 'band', weapon: 'hammer' }, shop: ['w2', 'w3', 'kl1', 'kl2', 'hd1', 'sd1', 'gl1', 'a2', 'hd2', 'sd2', 'gl2', 'lg2', 'bt2', 'a3', 'hd3', 'sd3', 'gl3', 'lg3', 'bt3', 'toz'] },
         { role: 'kervan', name: 'Kervanbaşı Yusuf', dx: 7, dz: 6.5, look: { skin: 0xc9926a, cloth: 0x8a2f2a, trim: 0xe7c46a, pants: 0x4a2622, hat: 'wrap', weapon: 'staff' } },
         { role: 'kapi', name: 'Yol Kapısı', dx: -8.5, dz: 6.5 },
         { role: 'hayvan', name: 'Çoban Kaya', dx: 2.5, dz: 7.2, look: { skin: 0xc68d62, cloth: 0x6b5a2e, trim: 0xd9b25c, pants: 0x3a3022, hat: 'band', weapon: 'staff' }, shop: ['pet_tavsan', 'pet_sincap', 'pet_kurt', 'yem', 'merhem', 'hayatotu', 'muska'] }
@@ -281,10 +326,10 @@ KY.DATA = (function () {
       style: 'desert',
       npcs: [
         { role: 'tuccar', name: 'Selim Efendi', dx: -5.5, dz: -6.5, look: { skin: 0xb07650, cloth: 0xd6c19a, trim: 0x2f6f73, pants: 0x8a7556, hat: 'wrap' } },
-        { role: 'demirci', name: 'Kara Hasan', dx: 6.5, dz: -6.5, look: { skin: 0x9a6442, cloth: 0x3a2f28, trim: 0xc2572b, pants: 0x2a221e, hat: 'band', weapon: 'hammer' }, shop: ['w3', 'w6', 'w4', 'a3', 'a4', 'toz'] },
-        { role: 'kervan', name: 'Kervanbaşı Leyla', dx: 7, dz: 6.5, look: { skin: 0xc48e66, cloth: 0x3c4f8a, trim: 0xe7c46a, pants: 0x28325a, hat: 'wrap', weapon: 'staff' } },
+        { role: 'demirci', name: 'Kara Hasan', dx: 6.5, dz: -6.5, look: { skin: 0x9a6442, cloth: 0x3a2f28, trim: 0xc2572b, pants: 0x2a221e, hat: 'band', weapon: 'hammer' }, shop: ['w3', 'w6', 'w4', 'kl3', 'kl4', 'a3', 'lg3', 'bt3', 'a4', 'hd4', 'sd4', 'gl4', 'lg4', 'bt4', 'toz'] },
+        { role: 'kervan', name: 'Kervanbaşı Leyla', g: 'f', dx: 7, dz: 6.5, look: { skin: 0xc48e66, cloth: 0x3c4f8a, trim: 0xe7c46a, pants: 0x28325a, hat: 'wrap', weapon: 'staff' } },
         { role: 'kapi', name: 'Yol Kapısı', dx: -8.5, dz: 6.5 },
-        { role: 'hayvan', name: 'Bahar Hatun', dx: 2.5, dz: 7.2, look: { skin: 0xb98056, cloth: 0x7a2f5a, trim: 0xe7c46a, pants: 0x3a2030, hat: 'wrap', weapon: 'staff' }, shop: ['pet_fenek', 'pet_sahin', 'pet_kurt', 'yem', 'merhem', 'hayatotu', 'muska'] }
+        { role: 'hayvan', name: 'Bahar Hatun', g: 'f', dx: 2.5, dz: 7.2, look: { skin: 0xb98056, cloth: 0x7a2f5a, trim: 0xe7c46a, pants: 0x3a2030, hat: 'wrap', weapon: 'staff' }, shop: ['pet_fenek', 'pet_sahin', 'pet_kurt', 'yem', 'merhem', 'hayatotu', 'muska'] }
       ],
       spawn: { dx: 0, dz: 2.5 },
       buildings: [
@@ -340,5 +385,6 @@ KY.DATA = (function () {
   }
   registerColliders();
 
-  return { monsters, items, pets, petRules, enhance, trees, skills, skillBar, goods, trade, spawns, npcRoles, towns, quests, player };
+  const isEquip = (it) => !!(it && equipTypes[it.type]);
+  return { monsters, items, pets, petRules, enhance, trees, skills, skillBar, goods, trade, spawns, npcRoles, towns, quests, player, eqSlots, slotName, equipTypes, armorParts, isEquip };
 })();

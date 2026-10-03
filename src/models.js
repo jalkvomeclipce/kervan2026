@@ -13,10 +13,30 @@ KY.Models = (function () {
     const key = color + '|' + (emissive || 0);
     let m = matCache.get(key);
     if (!m) {
-      m = emissive ? new THREE.MeshBasicMaterial({ color }) : new THREE.MeshLambertMaterial({ color });
+      m = emissive ? new THREE.MeshBasicMaterial({ color }) : (KY.Gfx ? KY.Gfx.creatureMaterial(color) : new THREE.MeshLambertMaterial({ color }));
       matCache.set(key, m);
     }
     return m;
+  }
+  // yuvarlatılmış kutu: kenarları pahlı, yumuşak gölgeli (karakter ve canavar parçaları için)
+  function rboxG(w, h, d) {
+    const key = 'r' + w + '|' + h + '|' + d;
+    let g = geoCache.get(key);
+    if (!g) {
+      const r = Math.min(w, h, d) * 0.32, hx = w / 2 - r, hy = h / 2 - r, hz = d / 2 - r;
+      g = new THREE.BoxGeometry(w, h, d, 3, 3, 3);
+      const p = g.attributes.position, n = g.attributes.normal;
+      for (let i = 0; i < p.count; i++) {
+        const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+        const cx = Math.max(-hx, Math.min(hx, x)), cy = Math.max(-hy, Math.min(hy, y)), cz = Math.max(-hz, Math.min(hz, z));
+        const dx = x - cx, dy = y - cy, dz = z - cz, l = Math.hypot(dx, dy, dz);
+        if (l < 1e-6) continue;
+        p.setXYZ(i, cx + dx / l * r, cy + dy / l * r, cz + dz / l * r);
+        n.setXYZ(i, dx / l, dy / l, dz / l);
+      }
+      geoCache.set(key, g);
+    }
+    return g;
   }
   // düz gölgeli görünüm için indekssiz geometri
   function flat(key, make) {
@@ -39,7 +59,7 @@ KY.Models = (function () {
     parent.add(m);
     return m;
   }
-  const box = (w, h, d, c, x, y, z, p, o) => part(boxG(w, h, d), c, x, y, z, p, o);
+  const box = (w, h, d, c, x, y, z, p, o) => part(rboxG(w, h, d), c, x, y, z, p, o);
   function shade(hex, f) {
     const c = new THREE.Color(hex);
     c.r = Math.min(1, c.r * f); c.g = Math.min(1, c.g * f); c.b = Math.min(1, c.b * f);
@@ -341,5 +361,5 @@ KY.Models = (function () {
   const CAMEL = { c1: 0xc79a62, c2: 0xe2c79a, len: 1.5, h: 0.72, w: 0.62, leg: 1.0, head: 0.36, ears: 'round', tail: 0.4, neck: 0.85, hump: true };
   function camel(withPacks) { return quad(CAMEL, 1, { packs: withPacks }); }
 
-  return { mat, flat, boxG, coneG, cylG, icoG, box, part, group, shade, human, quad, scorpion, golem, bird, pet, build, camel };
+  return { mat, flat, boxG, rboxG, coneG, cylG, icoG, box, part, group, shade, human, quad, scorpion, golem, bird, pet, build, camel };
 })();

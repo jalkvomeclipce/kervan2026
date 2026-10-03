@@ -9,7 +9,7 @@ var KY = (typeof KY !== 'undefined') ? KY : {};
 KY.World = (function () {
   const T = KY.Terrain, D = KY.DATA;
   const M = D.monsters, I = D.items, S = D.skills, G = D.goods, TR = D.trade;
-  const INV_SIZE = 30;
+  const INV_SIZE = 56;   // iki sayfa × 28 göz (Silkroad düzeni: 4 sütun)
 
   const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
   const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -58,7 +58,7 @@ KY.World = (function () {
         lv: 1, xp: 0, sp: 0, str: 20, int: 20, points: 0,
         hp: 1, mp: 1, gold: 60,
         mastery: { kilic: 1, ates: 1 },
-        inv, eq: { weapon: { id: 'w1', plus: 0 }, armor: { id: 'a1', plus: 0 } },
+        inv, eq: World.freshEq(), look: { g: 'f', hair: 0, skin: 0 },
         trade: { lv: 1, xp: 0 },
         cds: {}, buffs: [], target: null, autoAttack: false, pending: null, pendingTarget: null,
         interact: null, pickup: null, path: [], moving: false, nextAtk: 0, gcd: 0, potCd: 0,
@@ -76,7 +76,7 @@ KY.World = (function () {
           this.npcs.push({
             id: tid + '-' + n.role, kind: 'npc', role: n.role, name: n.name, title: role.title,
             town: tid, x, z, y: T.groundY(x, z), rot: Math.atan2(tw.x - x, tw.z - z), rad: 0.6,
-            shop: n.shop || role.shop || null, look: n.look || null
+            shop: n.shop || role.shop || null, look: n.look || null, g: n.g || 'm'
           });
         }
       }
@@ -130,20 +130,33 @@ KY.World = (function () {
     }
     town(tid) { return T.TOWNS[tid]; }
 
+    // kuşanılan eşyanın değeri (güçlendirme dahil)
+    static eqValue(e) {
+      if (!e) return { atk: 0, def: 0 };
+      const it = I[e.id], E = D.enhance, pl = e.plus || 0;
+      return { atk: it.atk ? it.atk * (1 + E.bonus * pl) + pl * 2 : 0, def: it.def ? it.def * (1 + E.bonus * pl) + pl : 0 };
+    }
     recalc() {
-      const p = this.player, E = D.enhance;
-      const w = p.eq.weapon, a = p.eq.armor, wi = I[w.id], ai = I[a.id];
-      const wAtk = wi.atk * (1 + E.bonus * w.plus) + w.plus * 2;
-      const aDef = ai.def * (1 + E.bonus * a.plus) + a.plus;
+      const p = this.player;
+      const w = p.eq.weapon;
+      const wAtk = w ? World.eqValue(w).atk : 3;
+      let aDef = 0, hpB = 0, mpB = 0, atkB = 0, magB = 0, critB = 0;
+      for (const slot of D.eqSlots) {
+        const e = p.eq[slot];
+        if (!e || slot === 'weapon') continue;
+        const it = I[e.id];
+        aDef += World.eqValue(e).def;
+        hpB += it.hpBonus || 0; mpB += it.mpBonus || 0; atkB += it.atkBonus || 0; magB += it.magBonus || 0; critB += it.critBonus || 0;
+      }
       let defMul = 1;
       for (const b of p.buffs) if (b.def) defMul += b.def;
       this.stats = {
-        maxHp: Math.round(100 + p.str * 7 + p.lv * 18 + (ai.hpBonus || 0)),
-        maxMp: Math.round(60 + p.int * 6 + p.lv * 10),
-        phy: Math.round(wAtk + p.str * 1.1 + p.lv * 1.5),
-        mag: Math.round(p.int * 1.5 + p.lv * 2 + wAtk * 0.3),
+        maxHp: Math.round(100 + p.str * 7 + p.lv * 18 + hpB),
+        maxMp: Math.round(60 + p.int * 6 + p.lv * 10 + mpB),
+        phy: Math.round(wAtk + atkB + p.str * 1.1 + p.lv * 1.5),
+        mag: Math.round(p.int * 1.5 + p.lv * 2 + wAtk * 0.3 + magB),
         def: Math.round((aDef + p.str * 0.35 + p.lv * 0.8) * defMul),
-        crit: 0.06, wAtk: Math.round(wAtk), aDef: Math.round(aDef)
+        crit: 0.06 + critB, wAtk: Math.round(wAtk), aDef: Math.round(aDef)
       };
       if (p.hp > this.stats.maxHp) p.hp = this.stats.maxHp;
       if (p.mp > this.stats.maxMp) p.mp = this.stats.maxMp;
@@ -374,17 +387,65 @@ KY.World = (function () {
       if (it.type === 'potion') { this.drink(s.id); return; }
       if (it.type === 'pet') { this.cmdPetToggle(k); return; }
       if (it.type === 'petitem') { this.usePetItem(s.id); return; }
-      if (it.type === 'weapon' || it.type === 'armor') {
-        if (p.lv < it.lv) { this.log(`${it.name} için ${it.lv}. seviye gerekli.`, 'warn'); return; }
-        const slot = it.type;
-        const old = p.eq[slot];
-        p.eq[slot] = { id: s.id, plus: s.plus || 0 };
-        p.inv[k] = { id: old.id, n: 1, plus: old.plus };
-        this.recalc();
-        this.emit('equip', { slot });
-        this.log(`${it.name}${s.plus ? ' +' + s.plus : ''} kuşanıldı.`, 'good');
-        this.questState();
+      if (D.isEquip(it)) this.cmdEquip(k);
+    }
+    // eşyanın gideceği yuva (yüzük: boş olan ilk yüzük yuvası)
+    slotFor(it, want) {
+      if (!D.isEquip(it)) return null;
+      if (it.type === 'ring') {
+        if (want === 'ring1' || want === 'ring2') return want;
+        const p = this.player;
+        return !p.eq.ring1 ? 'ring1' : !p.eq.ring2 ? 'ring2' : 'ring1';
       }
+      return it.type;
+    }
+    cmdEquip(k, want) {
+      const p = this.player, s = p.inv[k];
+      if (!s || p.dead) return false;
+      const it = I[s.id], slot = this.slotFor(it, want);
+      if (!slot || (want && slot !== want)) { if (want) this.log(`${it.name} bu yuvaya takılmaz.`, 'warn'); return false; }
+      if (p.lv < it.lv) { this.log(`${it.name} için ${it.lv}. seviye gerekli.`, 'warn'); return false; }
+      const old = p.eq[slot];
+      const hpR = p.hp / this.stats.maxHp, mpR = p.mp / this.stats.maxMp;
+      p.eq[slot] = { id: s.id, plus: s.plus || 0 };
+      p.inv[k] = old ? { id: old.id, n: 1, plus: old.plus } : null;
+      this.recalc();
+      p.hp = Math.min(this.stats.maxHp, Math.max(p.hp, Math.round(this.stats.maxHp * hpR))); p.mp = Math.min(this.stats.maxMp, Math.max(p.mp, Math.round(this.stats.maxMp * mpR)));
+      this.emit('equip', { slot });
+      this.log(`${it.name}${s.plus ? ' +' + s.plus : ''} kuşanıldı.`, 'good');
+      this.questState();
+      return true;
+    }
+    cmdUnequip(slot, k) {
+      const p = this.player, e = p.eq[slot];
+      if (!e || p.dead) return false;
+      if (k == null || p.inv[k]) k = p.inv.indexOf(null);
+      if (k < 0) { this.log('Çantada yer yok.', 'warn'); return false; }
+      p.inv[k] = { id: e.id, n: 1, plus: e.plus };
+      p.eq[slot] = null;
+      this.recalc();
+      this.emit('equip', { slot });
+      this.log(`${I[e.id].name} çıkarıldı.`);
+      return true;
+    }
+    // çanta içinde iki gözü yer değiştir (sürükle-bırak)
+    cmdMoveSlot(a, b) {
+      const inv = this.player.inv;
+      if (a === b || a < 0 || b < 0 || a >= INV_SIZE || b >= INV_SIZE) return;
+      const A = inv[a], B = inv[b];
+      if (A && B && A.id === B.id && I[A.id].stack && !A.plus && !B.plus) {
+        const mv = Math.min(A.n, I[A.id].stack - B.n);
+        B.n += mv; A.n -= mv; if (A.n <= 0) inv[a] = null;
+      } else { inv[a] = B; inv[b] = A; }
+      this.emit('inv');
+    }
+    cmdSortInv() {
+      const p = this.player, order = { weapon: 0, shield: 1, head: 2, shoulder: 3, armor: 4, hands: 5, legs: 6, feet: 7, earring: 8, necklace: 9, ring: 10, potion: 20, petitem: 21, pet: 22, material: 23 };
+      const items = p.inv.filter(Boolean);
+      items.sort((a, b) => (order[I[a.id].type] ?? 30) - (order[I[b.id].type] ?? 30) || (I[b.id].tier || 0) - (I[a.id].tier || 0) || a.id.localeCompare(b.id));
+      p.inv = new Array(INV_SIZE).fill(null);
+      items.forEach((it, k) => p.inv[k] = it);
+      this.emit('inv');
     }
     cmdDropSlot(k) {
       const s = this.player.inv[k];
@@ -439,7 +500,9 @@ KY.World = (function () {
     cmdEnhance(slot) {
       const n = this.nearNpc('demirci');
       if (!n) return;
-      const p = this.player, E = D.enhance, e = p.eq[slot], it = I[e.id];
+      const p = this.player, E = D.enhance, e = p.eq[slot];
+      if (!e) return;
+      const it = I[e.id];
       if (e.plus >= E.max) { this.log('Bu eşya en üst seviyede.', 'warn'); return; }
       const cost = E.cost(e.plus);
       if (this.count('toz') < 1) { this.log('Güçlendirme Tozu gerekiyor.', 'warn'); return; }
@@ -547,7 +610,7 @@ KY.World = (function () {
       this.log(`Yönetici: ${I[id].name} ×${n - left}.`, 'good');
     }
     adminAllSwords() {
-      const have = new Set([this.player.eq.weapon.id]);
+      const have = new Set(Object.values(this.player.eq).filter(Boolean).map(e => e.id));
       for (const s of this.player.inv) if (s) have.add(s.id);
       let n = 0;
       for (const id in I) if (I[id].type === 'weapon' && !have.has(id)) { if (this.addItem(id, 1) === 0) n++; }
@@ -556,6 +619,7 @@ KY.World = (function () {
     }
     adminPlus(slot, plus) {
       const e = this.player.eq[slot];
+      if (!e) return;
       e.plus = Math.max(0, Math.min(D.enhance.max, plus | 0));
       this.recalc();
       this.emit('equip', { slot });
@@ -723,7 +787,7 @@ KY.World = (function () {
       const mk = (g, its, off) => {
         const id = 'L' + (this.uid++);
         const x = m.x + off[0], z = m.z + off[1];
-        this.loot.set(id, { id, kind: 'loot', x, z, y: T.groundY(x, z), gold: g, items: its, expires: this.t + 90, rare: its.some(i => I[i[0]].type === 'weapon' || I[i[0]].type === 'armor') });
+        this.loot.set(id, { id, kind: 'loot', x, z, y: T.groundY(x, z), gold: g, items: its, expires: this.t + 90, rare: its.some(i => D.isEquip(I[i[0]])) });
         this.emit('loot', { id });
       };
       mk(gold, [], [rnd(-0.6, 0.6), rnd(-0.6, 0.6)]);
@@ -736,7 +800,7 @@ KY.World = (function () {
         const left = this.addItem(id, n);
         if (left >= n) { this.log('Çantan dolu!', 'warn'); return; }
         const it = I[id];
-        this.log(`Toplandı: ${it.name}${n > 1 ? ' ×' + n : ''}`, (it.type === 'weapon' || it.type === 'armor') ? 'epic' : '');
+        this.log(`Toplandı: ${it.name}${n > 1 ? ' ×' + n : ''}`, D.isEquip(it) ? 'epic' : '');
       }
       this.loot.delete(L.id);
       this.emit('lootGone', { id: L.id, picked: true });
@@ -1130,8 +1194,9 @@ KY.World = (function () {
       const p = this.player, g = q.goal;
       let done = false;
       if (g.kind === 'mastery') { this.quest.n = Math.max(p.mastery.kilic, p.mastery.ates); done = this.quest.n >= g.n; }
-      if (g.kind === 'weapon') done = I[p.eq.weapon.id].tier >= 1 || p.eq.weapon.plus >= g.n;
-      if (g.kind === 'plus') { this.quest.n = p.eq.weapon.plus; done = p.eq.weapon.plus >= g.n; }
+      const wp = p.eq.weapon;
+      if (g.kind === 'weapon') done = !!wp && (I[wp.id].tier >= 1 || wp.plus >= g.n);
+      if (g.kind === 'plus') { this.quest.n = wp ? wp.plus : 0; done = !!wp && wp.plus >= g.n; }
       this.emit('quest');
       if (done) this.completeQuest();
     }
@@ -1173,8 +1238,10 @@ KY.World = (function () {
         v: 1,
         p: {
           lv: p.lv, xp: p.xp, sp: p.sp, str: p.str, int: p.int, points: p.points, hp: Math.round(p.hp), mp: Math.round(p.mp),
-          gold: p.gold, mastery: p.mastery, inv: p.inv, eq: p.eq, trade: p.trade, x: p.x, z: p.z, rot: p.rot, dead: p.dead
+          gold: p.gold, mastery: p.mastery, inv: p.inv, eq: p.eq, trade: p.trade, x: p.x, z: p.z, rot: p.rot, dead: p.dead,
+          name: p.name, look: p.look
         },
+        at: Date.now(),
         c: c ? { goods: c.goods, cost: c.cost, from: c.from, hp: c.hp, maxHp: c.maxHp, x: c.x, z: c.z } : null,
         q: this.quest,
         pets: this.serializePets ? this.serializePets() : null
@@ -1185,8 +1252,8 @@ KY.World = (function () {
       const p = this.player, sp = s.p;
       Object.assign(p, {
         lv: sp.lv, xp: sp.xp, sp: sp.sp, str: sp.str, int: sp.int, points: sp.points, hp: sp.hp, mp: sp.mp,
-        gold: sp.gold, mastery: Object.assign({ kilic: 1, ates: 1 }, sp.mastery), eq: sp.eq, trade: sp.trade || { lv: 1, xp: 0 },
-        rot: sp.rot || 0
+        gold: sp.gold, mastery: Object.assign({ kilic: 1, ates: 1 }, sp.mastery), eq: World.migrateEq(sp.eq), trade: sp.trade || { lv: 1, xp: 0 },
+        rot: sp.rot || 0, name: sp.name || p.name, look: Object.assign({ g: 'f', hair: 0, skin: 0 }, sp.look)
       });
       p.inv = new Array(INV_SIZE).fill(null);
       (sp.inv || []).forEach((it, k) => { if (k < INV_SIZE && it && I[it.id]) p.inv[k] = it; });
@@ -1204,5 +1271,18 @@ KY.World = (function () {
     }
   }
   World.INV_SIZE = INV_SIZE;
+  World.freshEq = () => {
+    const eq = {};
+    for (const k of D.eqSlots) eq[k] = null;
+    Object.assign(eq, { weapon: { id: 'w1', plus: 0 }, armor: { id: 'a1', plus: 0 }, legs: { id: 'lg1', plus: 0 }, feet: { id: 'bt1', plus: 0 } });
+    return eq;
+  };
+  // eski kayıtlar: yalnız silah + zırh vardı; yeni yuvalar boş, başlangıç etek ve sandaleti verilir
+  World.migrateEq = (eq) => {
+    const out = {};
+    for (const k of D.eqSlots) out[k] = eq && eq[k] && I[eq[k].id] ? { id: eq[k].id, plus: eq[k].plus || 0 } : null;
+    if (eq && !('legs' in eq)) { out.legs = { id: 'lg1', plus: 0 }; out.feet = out.feet || { id: 'bt1', plus: 0 }; }
+    return out;
+  };
   return World;
 })();

@@ -8,18 +8,20 @@ Oyun mantığı ile çizim birbirinden ayrı. 3D'yi değiştirmek ya da ileride 
 
 | Dosya | Görev |
 |---|---|
+| `src/config.js` | Google ile giriş / bulut kaydı için Firebase ayarları (boşsa misafir modu) |
 | `src/terrain.js` | Arazi yüksekliği, nehir, yol, köprü, kasaba kapıları, rota bulma |
-| `src/data.js` | Tüm içerik: canavarlar, eşyalar, yetenekler, mallar, kasabalar, görevler |
-| `src/logic.js` | `KY.World`: savaş, seviye, envanter, ticaret, kervan, pusu, kayıt |
-| `src/pets.js` | Hayvan sistemi: toplayıcı ve savaş hayvanları, TP, dönüşüm, açlık, ölüm, hayvan çantası |
-| `src/models.js` | Kodla üretilen düşük poligonlu karakter ve canavar modelleri |
-| `src/swords.js` | Kılıç üreticisi: data.js tariflerinden 3D kılıç, 3D önizleme, simge üretimi |
-| `src/scenery.js` | Arazi ağı, ağaçlar, kayalar, kasabalar, köprü (bölgelere ayrılmış tek ağlar) |
-| `src/render.js` | `KY.View`: animasyon, efektler, kamera, dokunma/fare |
-| `src/ui.js`, `icons.js`, `sfx.js` | HUD, paneller, dükkânlar, mini harita, simgeler, sentez sesler |
-| `src/main.js` | Hepsini bağlar, kayıt ve ana döngü |
-| `assets/guard.glb` | Oyuncu karakteri: dokulu, iskeletli 3D model ve 7 animasyon (derlemede HTML'e gömülür) |
-| `char/` | Karakter hattı: konsept görselden 3D modele, Blender ile temizlik, iskelet ve animasyon |
+| `src/data.js` | Tüm içerik: canavarlar, eşyalar, zırh takımları, takılar, yetenekler, mallar, kasabalar, görevler |
+| `src/logic.js` | `KY.World`: savaş, seviye, envanter, 12 yuvalı ekipman, ticaret, kervan, pusu, kayıt |
+| `src/pets.js` | Hayvan sistemi |
+| `src/gfx.js` | Görsel çekirdek: kodla üretilen dokular, arazi/bina/bitki gölgelendiricileri, gökyüzü, su, uzak dağlar, HDR ışıltı ve renk düzenleme |
+| `src/models.js` | Canavar ve hayvan modelleri (yuvarlatılmış parçalar) |
+| `src/avatar.js` | Modüler kadın/erkek karakter: kuşanılan her eşya ayrı 3D parça, iskeletli tek ağ, kodla animasyon, envanter önizlemesi, eşya simgeleri |
+| `src/swords.js` | Kılıç üreticisi |
+| `src/scenery.js` | Dokulu arazi, su, ağaçlar, çimen, kayalar, Silkroad tarzı kasabalar, köprü |
+| `src/render.js` | `KY.View`: kamera, bölge atmosferi, efektler, dokunma/fare |
+| `src/ui.js`, `icons.js`, `sfx.js` | HUD, envanter (sürükle-bırak, ipuçları), paneller, dükkânlar, mini harita |
+| `src/cloud.js` | Google girişi (Firebase Auth) ve bulut kaydı (Firestore) |
+| `src/main.js` | Giriş ekranı, karakter seçimi/oluşturma, otomatik kayıt, ana döngü |
 
 ## Derleme
 
@@ -54,15 +56,36 @@ Yeni kılıç: `data.js` içinde `items` listesine eşyayı, `SWORD` tablosuna g
 
 Yeni canavar: `data.js` içinde `monsters` ve `spawns` listesine bir satır. Yeni eşya ya da mal: `items` / `goods`. Yeni görev: `quests`.
 
-## 3D karakter hattı (ücretsiz)
+## Grafik
 
-`assets/guard.glb` şu adımlarla üretildi, hepsi `char/` klasöründe:
+Silkroad Online havası hedeflendi: alçak üçüncü şahıs kamera, dokulu arazi (çimen, kum, kaya, toprak yol, arnavut kaldırımı) ve bulut gölgeleri, rüzgârda sallanan ağaç ve çimen kartları, derinliğe göre renk alan nehir, bulutlu gökyüzü ve uzak dağlar, bozkır/çöl atmosferi, kıvrık saçaklı kiremit çatılar, fenerler, HDR ışıltı. Ayarlar'daki "Performans" modu gölgeleri ve son işlemeyi kapatır.
 
-1. `concept_crop.png`: konsept görsel (silahsız, zeminsiz, düz arka plan).
-2. `run_trellis.py`: Hugging Face üzerindeki Microsoft TRELLIS.2 ile görselden dokulu 3D model. TRELLIS.2 MIT lisanslı, ticari kullanım serbest. Ücretsiz bir Hugging Face hesabının okuma token'ı gerekir, komut satırından verilir, dosyaya yazılmaz:
-   `HF_TOKEN=hf_... python3 run_trellis.py`
-3. `bl_prep.py`: Blender (pip ile `bpy` 4.2) ile dikiş kaynağı, 1.8 m ölçek, ayak hizası, 14 bin üçgene sadeleştirme.
-4. `bl_rig.py`: 21 kemikli iskelet, otomatik ağırlık, Idle / Walk / Run / Attack / Cast / Hit / Die animasyonları, GLB çıktısı.
-5. `bl_posecheck.py`: pozları tek görselde gösterir (`poses.png`).
+## Karakter ve ekipman
 
-Oyunda `render.js` içindeki `loadGuard` ve `buildSkinned` modeli yükler, kılıcı sağ ele (`hand_R`) takar, animasyonlar arasında yumuşak geçiş yapar. Yeni karakter ya da canavar için aynı hat kullanılır: yeni görsel, aynı betikler, `build.js` içinde `assets` listesine bir satır.
+Karakter oluşturmada cinsiyet, saç, saç rengi, ten ve ad seçilir. Ekipman yuvaları: silah, kalkan, başlık, omuzluk, göğüslük, kolluk, etek, çizme, küpe, kolye, 2 yüzük. Zırh takımları: Keten, Deri, Pullu, Lamel, Kızıl Yele. Her parça karakterin üstünde ayrı görünür; +5 ve üstü güçlendirilmiş parçaların süsleri parlar. Envanterde eşyayı sürükleyip yuvaya bırak, çift tıkla ya da sağ tıkla kuşan.
+
+## Google ile giriş ve bulut kaydı
+
+`src/config.js` boşken oyun misafir modunda çalışır (kayıt tarayıcıda). Google girişini açmak için:
+
+1. https://console.firebase.google.com → proje oluştur (ücretsiz Spark planı yeter).
+2. Authentication → Sign-in method → Google'ı etkinleştir.
+3. Authentication → Settings → Authorized domains → oyunun yayınlandığı alan adını ekle.
+4. Firestore Database → oluştur → Rules:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /saves/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}
+```
+
+5. Project settings → Web app ekle → `firebaseConfig` içindeki `apiKey`, `authDomain`, `projectId`, `appId` değerlerini `src/config.js`'e yaz, `node build.js`.
+
+Giriş yapan oyuncunun ilerlemesi 15 saniyede bir yerele, 30 saniyede bir ve sekme kapanırken buluta yazılır; başka cihazda aynı hesapla açınca en yeni kayıt yüklenir. Misafir ilerlemesi Ayarlar → "Google ile bağlan" ile hesaba taşınır.
+
+`char/` klasöründeki görselden-3D model betikleri artık oyunda kullanılmıyor (karakter kodla üretiliyor); ileride canavar modeli üretmek için duruyor.

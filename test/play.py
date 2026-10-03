@@ -29,7 +29,7 @@ with sync_playwright() as p:
     pg.goto('http://game.local/', wait_until='load')
     pg.wait_for_function('document.body.classList.contains("ready")', timeout=60000)
     pg.click('#startBtn')
-    pg.wait_for_function("() => __ky.view.ents.get('player').model.kind === 'skinned'", timeout=60000)
+    pg.wait_for_function("() => __ky.view.ents.get('player').model.kind === 'avatar'", timeout=60000)
     pg.wait_for_timeout(800)
     info = pg.evaluate('() => { const r = __ky.view.renderer.info.render; return {calls: r.calls, tris: r.triangles} }')
     print('render info', info)
